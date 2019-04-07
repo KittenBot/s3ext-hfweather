@@ -91,6 +91,7 @@ class hfweather{
         {
           opcode: 'onweather',
           blockType: BlockType.HAT,
+          isEdgeActivated: false,
           text: '当天气返回'
         },
         {
@@ -118,6 +119,10 @@ class hfweather{
           blockType: BlockType.COMMAND,
           arguments: {
             DAY: {
+              type: ArgumentType.NUMBER,
+              defaultValue: 1
+            },
+            LOC: {
               type: ArgumentType.STRING
             }
           },
@@ -126,6 +131,7 @@ class hfweather{
         {
           opcode: 'onforecast',
           blockType: BlockType.HAT,
+          isEdgeActivated: false,
           text: '当天气预报返回'
         }
       ]
@@ -141,48 +147,57 @@ getweather (args, util){
   return fetch(url).then(res => {
     if (res.ok) {
       res.json().then(json => {
-        console.log("weather ret", json);
         this.weather = json.HeWeather6[0].now;
-        this.runtime.startHats('JoyFrog_onInfraGet', {});
+        this.runtime.startHats('hfweather_onweather', {});
       });
     }
   });
 }
 
 onweather (args, util){
-
-  return this.write(`M0 \n`);
+  return true;
 }
 
 temp (args, util){
-
-  return this.write(`M0 \n`);
+  return this.weather.tmp;
 }
 
 cond (args, util){
-
-  return this.write(`M0 \n`);
+  return this.weather.cond_txt;
 }
 
 hum (args, util){
-
-  return this.write(`M0 \n`);
+  return this.weather.hum;
 }
 
 pcpn (args, util){
-
-  return this.write(`M0 \n`);
+  return this.weather.pcpn;
 }
 
 getforecast (args, util){
-  const DAY = args.DAY;
+  const LOC = args.LOC;
+  let DAY = args.DAY;
+  const url = new URL("https://free-api.heweather.net/s6/weather/forecast?");
+  url.searchParams.append('location', LOC || 'auto_ip')
+  url.searchParams.append('key', APIKEY)
 
-  return this.write(`M0 \n`);
+  return fetch(url).then(res => {
+    if (res.ok) {
+      res.json().then(json => {
+        if (!DAY && DAY<1){
+          DAY = 1
+        }
+        this.weather = json.HeWeather6[0].daily_forecast[DAY-1];
+        this.weather.tmp = (parseFloat(this.weather.tmp_max) + parseFloat(this.weather.tmp_min))/2;
+        this.weather.cond_txt = this.weather.cond_txt_d;
+        this.runtime.startHats('hfweather_onforecast', {});
+      });
+    }
+  });
 }
 
 onforecast (args, util){
-
-  return this.write(`M0 \n`);
+  return true;
 }
 
 }

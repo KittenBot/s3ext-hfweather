@@ -101,16 +101,12 @@ getweather (args, util){
 
 不管写任何代码，到这个时候希望大家仔细阅读文档，想清楚具体实现，可以的话可以编写一些测试用例去检测你的想法是不是行得通的。和风的api是一个很通用的restful api格式模板，鉴权过程也相当简单，直接把key填在GET请求参数就行了~
 
-这里就不卖关子了，直接上代码。 我们将上面读取实时天气的函数改造成如下：
+这里就不卖关子了，直接上代码。 我们将上面读取实时天气的函数改造成如下，之后重启kittenblock加载插件。
 
 ```js
 getweather (args, util){
   const LOC = args.LOC;
   const url = new URL("https://free-api.heweather.net/s6/weather/now?");
-  const parameters = {
-      location: LOC || 'auto_ip',
-      key: APIKEY
-  }
   url.searchParams.append('location', LOC || 'auto_ip')
   url.searchParams.append('key', APIKEY)
 
@@ -123,8 +119,82 @@ getweather (args, util){
   });
 }
 ```
+*PS：这里有个小技巧，就是现在kittenblock外建立一些测试用的js代码或用例把东西都先调通再移植进来，毕竟反复的重启软件也是挺烦的。*
+
+我们可以按`F12`打开kittenblock的devtool，查看点击该积木的返回json内容。
+
+```json
+weather ret 
+{HeWeather6: Array(1)}
+HeWeather6: Array(1)
+0:
+basic:
+admin_area: "广东"
+cid: "CN101280601"
+cnty: "中国"
+lat: "22.54700089"
+location: "深圳"
+lon: "114.08594513"
+parent_city: "深圳"
+tz: "+8.00"
+__proto__: Object
+now:
+cloud: "91"
+cond_code: "100"
+cond_txt: "晴"
+fl: "27"
+hum: "91"
+pcpn: "0.0"
+pres: "1011"
+tmp: "24"
+vis: "16"
+wind_deg: "180"
+wind_dir: "南风"
+wind_sc: "1"
+wind_spd: "5"
+__proto__: Object
+status: "ok"
+update:
+loc: "2019-04-07 20:55"
+utc: "2019-04-07 12:55"
+__proto__: Object
+__proto__: Object
+length: 1
+__proto__: Array(0)
+__proto__: Object
+```
+
+知道json的结构后我们就可以将返回值暂存着，并触发帽子函数。`getweather`函数fetch部分改成如下：
+
+```js
+return fetch(url).then(res => {
+    if (res.ok) {
+      res.json().then(json => {
+        console.log("weather ret", json);
+        this.weather = json.HeWeather6[0].now;
+        this.runtime.startHats('hfweather_onweather', {});
+      });
+    }
+  });
+```
+
+这时候我们的帽子函数不做任何判断直接返回`true`就行了，之后读取温度函数直接返回刚才暂存的天气温度。远程调用帽子模块遵循MIT的定义 `插件ID_帽子函数ID`
+
+```js
+onweather (args, util){
+  return true;
+}
+
+temp (args, util){
+  return this.weather.tmp;
+}
+```
 
 
+
+使用异步的好处就是我们可以给程序多加几个小伙伴，每个人干不同的事情~
+
+![1554643479637](/1554643479637.png)
 
 
 
