@@ -126,6 +126,8 @@ class hfweather{
               type: ArgumentType.STRING
             }
           },
+          text: '读取 [LOC] 未来 [DAY] 的天气'
+        },
           text: '读取天气预报 [DAY]'
         },
         {
