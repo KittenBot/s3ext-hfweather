@@ -2,5 +2,10 @@
     "name": "和风天气",
     "type": "scratch3",
     "extensions": ["hfweather"],
-    "image": "hfweather.jpg"
+    "image": "hfweather.jpg",
+    "examples": [
+        "和风天气读取气温.sb3",
+        "和风天气与人工智能.sb3",
+        "和风天气预测未来天气.sb3"
+    ]
 }
